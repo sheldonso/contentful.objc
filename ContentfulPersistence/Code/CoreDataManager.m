@@ -70,7 +70,7 @@ NSString* EntityNameFromClass(Class class) {
 
 #pragma mark -
 
-- (id<CDAPersistedEntry>)createLocalizedPersistedEntryForContentTypeWithIdentifier:(NSString *)identifier {
+- (id<CDALocalizedPersistedEntry>)createLocalizedPersistedEntryForContentTypeWithIdentifier:(NSString *)identifier {
     Class entryClass = [self classForLocalizedEntriesOfContentTypeWithIdentifier:identifier];
     if (!entryClass) {
         return nil;
@@ -344,6 +344,7 @@ NSString* EntityNameFromClass(Class class) {
     self = [super initWithClient:client];
     if (self) {
         NSParameterAssert(dataModelName);
+        self.concurrencyType = NSMainQueueConcurrencyType;
         self.contentTypes = [@{} mutableCopy];
         self.dataModelName = dataModelName;
     }
@@ -357,6 +358,7 @@ NSString* EntityNameFromClass(Class class) {
     self = [super initWithClient:client query:query];
     if (self) {
         NSParameterAssert(dataModelName);
+        self.concurrencyType = NSMainQueueConcurrencyType;
         self.contentTypes = [@{} mutableCopy];
         self.dataModelName = dataModelName;
     }
@@ -403,6 +405,10 @@ NSString* EntityNameFromClass(Class class) {
     return mapping;
 }
 
+- (void)performBlock:(void (^)())block {
+    [self.managedObjectContext performBlock:block];
+}
+
 - (void)performSynchronizationWithSuccess:(void (^)())success failure:(CDARequestFailureBlock)failure {
     self.relationshipsToResolve = [@{} mutableCopy];
 
@@ -411,7 +417,9 @@ NSString* EntityNameFromClass(Class class) {
             self.contentTypes[contentType.identifier] = contentType;
         }
 
-        [super performSynchronizationWithSuccess:success failure:failure];
+        [self.managedObjectContext performBlock:^{
+            [super performSynchronizationWithSuccess:success failure:failure];
+        }];
     } failure:failure];
 }
 
@@ -485,7 +493,10 @@ NSString* EntityNameFromClass(Class class) {
 - (void)updatePersistedEntry:(id<CDAPersistedEntry>)persistedEntry withEntry:(CDAEntry *)entry {
     [super updatePersistedEntry:persistedEntry withEntry:entry];
 
-    NSDictionary* mappingForEntries = [super mappingForEntriesOfContentTypeWithIdentifier:entry.contentType.identifier];
+    NSString* contentTypeId = entry.contentType.identifier;
+    NSParameterAssert(contentTypeId);
+
+    NSDictionary*  mappingForEntries = [super mappingForEntriesOfContentTypeWithIdentifier:contentTypeId];
     [self enumerateMappedFieldsForContentTypeWithIdentifier:entry.contentType.identifier mapping:mappingForEntries usingBlock:^(CDAContentType *contentType, CDAField *field, NSString *keyPath) {
         if (field.type == CDAFieldTypeArray && field.itemType == CDAFieldTypeSymbol) {
             NSString* key = mappingForEntries[keyPath];
@@ -540,6 +551,17 @@ NSString* EntityNameFromClass(Class class) {
 
 #pragma mark - Core Data stack
 
+- (NSManagedObjectContextConcurrencyType)concurrencyType {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdirect-ivar-access"
+    if (_managedObjectContext == nil) {
+        return _concurrencyType;
+    }
+#pragma clang diagnostic pop
+
+    return self.managedObjectContext.concurrencyType;
+}
+
 - (NSManagedObjectContext *)managedObjectContext
 {
     if (_managedObjectContext != nil) {
@@ -548,7 +570,7 @@ NSString* EntityNameFromClass(Class class) {
     
     NSPersistentStoreCoordinator *coordinator = [self persistentStoreCoordinator];
     if (coordinator != nil) {
-        _managedObjectContext = [[NSManagedObjectContext alloc] init];
+        _managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:self.concurrencyType];
         _managedObjectContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy;
         [_managedObjectContext setPersistentStoreCoordinator:coordinator];
     }

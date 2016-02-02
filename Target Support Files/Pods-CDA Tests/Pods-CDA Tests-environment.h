@@ -88,13 +88,13 @@
 #define COCOAPODS_POD_AVAILABLE_ContentfulDeliveryAPI
 #define COCOAPODS_VERSION_MAJOR_ContentfulDeliveryAPI 1
 #define COCOAPODS_VERSION_MINOR_ContentfulDeliveryAPI 9
-#define COCOAPODS_VERSION_PATCH_ContentfulDeliveryAPI 3
+#define COCOAPODS_VERSION_PATCH_ContentfulDeliveryAPI 4
 
 // ContentfulPersistence
 #define COCOAPODS_POD_AVAILABLE_ContentfulPersistence
 #define COCOAPODS_VERSION_MAJOR_ContentfulPersistence 0
 #define COCOAPODS_VERSION_MINOR_ContentfulPersistence 3
-#define COCOAPODS_VERSION_PATCH_ContentfulPersistence 2
+#define COCOAPODS_VERSION_PATCH_ContentfulPersistence 3
 
 // FBSnapshotTestCase
 #define COCOAPODS_POD_AVAILABLE_FBSnapshotTestCase
