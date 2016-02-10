@@ -1,6 +1,6 @@
 {
   "name": "ContentfulDeliveryAPI",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "summary": "Objective-C SDK for Contentful's Content Delivery API.",
   "homepage": "https://github.com/contentful/contentful.objc/",
   "social_media_url": "https://twitter.com/contentful",
@@ -13,7 +13,7 @@
   },
   "source": {
     "git": "https://github.com/contentful/contentful.objc.git",
-    "tag": "1.9.4"
+    "tag": "1.9.5"
   },
   "requires_arc": true,
   "public_header_files": "Code/{CDAArray,CDAAsset,CDAClient,CDAConfiguration,CDAContentType,CDAEntry,CDAError,CDAField,CDANullabilityStubs,CDARequest,CDAResource,CDAResponse,CDASpace,CDASyncedSpace,ContentfulDeliveryAPI,CDAPersistenceManager,CDAPersistedAsset,CDAPersistedEntry,CDAPersistedSpace,CDALocalizablePersistedEntry,CDALocalizedPersistedEntry}.h",
