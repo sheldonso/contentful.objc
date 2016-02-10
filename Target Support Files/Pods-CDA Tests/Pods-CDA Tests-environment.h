@@ -94,7 +94,7 @@
 #define COCOAPODS_POD_AVAILABLE_ContentfulPersistence
 #define COCOAPODS_VERSION_MAJOR_ContentfulPersistence 0
 #define COCOAPODS_VERSION_MINOR_ContentfulPersistence 3
-#define COCOAPODS_VERSION_PATCH_ContentfulPersistence 3
+#define COCOAPODS_VERSION_PATCH_ContentfulPersistence 5
 
 // FBSnapshotTestCase
 #define COCOAPODS_POD_AVAILABLE_FBSnapshotTestCase
