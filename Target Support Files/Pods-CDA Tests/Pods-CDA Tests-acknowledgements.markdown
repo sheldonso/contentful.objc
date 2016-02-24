@@ -24,6 +24,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
+## ISO8601DateFormatter
+
+Copyright © 2006–2013 Peter Hosey
+ All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+Neither the name of Peter Hosey nor the names of his contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 ## CCLRequestReplay
 
 Copyright (c) 2014 Cocode LTD.
@@ -132,19 +145,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-## ISO8601DateFormatter
-
-Copyright © 2006–2013 Peter Hosey
- All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-Neither the name of Peter Hosey nor the names of his contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 ## OCMock
 
 Copyright (c) 2004-2013 by Mulle Kybernetik. All rights reserved.
@@ -164,6 +164,14 @@ Copyright (c) 2004-2013 by Mulle Kybernetik. All rights reserved.
 
 
 ## Realm
+
+TABLE OF CONTENTS
+
+1. Apache License version 2.0
+2. Realm Components
+3. Export Compliance
+
+-------------------------------------------------------------------------------
 
                                  Apache License
                            Version 2.0, January 2004
@@ -374,9 +382,9 @@ This software contains components with separate copyright and license terms.
 Your use of these components is subject to the terms and conditions of the
 following licenses.
 
-For the Realm Core (TightDB) component
+For the Realm Core component
 
-  Realm Core (TightDB) Binary License
+  Realm Core Binary License
 
   Copyright (c) 2011-2014 Realm Inc All rights reserved
 
@@ -408,6 +416,24 @@ For the Realm Core (TightDB) component
   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
+
+EXPORT COMPLIANCE
+
+You understand that the Software may contain cryptographic functions that may be
+subject to export restrictions, and you represent and warrant that you are not
+located in a country that is subject to United States export restriction or embargo,
+including Cuba, Iran, North Korea, Sudan, Syria or the Crimea region, and that you
+are not on the Department of Commerce list of Denied Persons, Unverified Parties,
+or affiliated with a Restricted Entity.
+
+You agree to comply with all export, re-export and import restrictions and
+regulations of the Department of Commerce or other agency or authority of the
+United States or other applicable countries. You also agree not to transfer, or
+authorize the transfer of, directly or indirectly, the Software to any prohibited
+country, including Cuba, Iran, North Korea, Sudan, Syria or the Crimea region,
+or to any person or organization on or affiliated with the Department of
+Commerce lists of Denied Persons, Unverified Parties or Restricted Entities, or
+otherwise in violation of any such restrictions or regulations.
 
 
 ## VCRURLConnection

@@ -1,1 +1,1 @@
-../../../../Realm/include-ios/Realm/RLMMigration_Private.h
+../../../../Realm/include/Realm/RLMMigration_Private.h

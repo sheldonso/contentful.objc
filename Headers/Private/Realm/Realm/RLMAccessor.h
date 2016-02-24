@@ -1,1 +1,1 @@
-../../../../Realm/include-ios/Realm/RLMAccessor.h
+../../../../Realm/include/Realm/RLMAccessor.h

@@ -1,1 +1,1 @@
-../../../../Realm/include-ios/Realm/RLMObject_Private.h
+../../../../Realm/include/Realm/RLMObject_Private.h

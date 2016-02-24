@@ -1,0 +1,5 @@
+#include "CCLRequestReplay.xcconfig"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers/Private" "${PODS_ROOT}/Headers/Private/CCLRequestReplay" "${PODS_ROOT}/Headers/Private/CCLRequestReplay/CCLRequestReplay" "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/AFNetworking" "${PODS_ROOT}/Headers/Public/CCLRequestReplay" "${PODS_ROOT}/Headers/Public/CCLRequestReplay/CCLRequestReplay" "${PODS_ROOT}/Headers/Public/ContentfulDeliveryAPI" "${PODS_ROOT}/Headers/Public/ContentfulPersistence" "${PODS_ROOT}/Headers/Public/FBSnapshotTestCase" "${PODS_ROOT}/Headers/Public/ISO8601DateFormatter" "${PODS_ROOT}/Headers/Public/OCMock" "${PODS_ROOT}/Headers/Public/Realm" "${PODS_ROOT}/Headers/Public/Realm/Realm" "${PODS_ROOT}/Headers/Public/VCRURLConnection"
+PODS_ROOT = ${SRCROOT}
+SKIP_INSTALL = YES

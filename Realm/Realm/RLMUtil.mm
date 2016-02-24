@@ -16,30 +16,43 @@
 //
 ////////////////////////////////////////////////////////////////////////////
 
-#import <Foundation/Foundation.h>
-
 #import "RLMUtil.hpp"
 
 #import "RLMArray_Private.hpp"
-#import "RLMObject.h"
+#import "RLMListBase.h"
 #import "RLMObjectSchema_Private.hpp"
-#import "RLMProperty.h"
+#import "RLMObjectStore.h"
+#import "RLMObject_Private.hpp"
+#import "RLMProperty_Private.h"
+#import "RLMSchema_Private.h"
+#import "RLMSwiftSupport.h"
 
-static inline bool nsnumber_is_like_integer(NSNumber *obj)
+#import <realm/mixed.hpp>
+#import <realm/table_view.hpp>
+
+#include <sys/sysctl.h>
+#include <sys/types.h>
+
+#if !defined(REALM_COCOA_VERSION)
+#import "RLMVersion.h"
+#endif
+
+static inline bool nsnumber_is_like_integer(__unsafe_unretained NSNumber *const obj)
 {
-    const char *data_type = [obj objCType];
-    // FIXME: Performance optimization - don't use strcmp, use first char in data_type.
-    return (strcmp(data_type, @encode(short)) == 0 ||
-            strcmp(data_type, @encode(int)) == 0 ||
-            strcmp(data_type, @encode(long)) ==  0 ||
-            strcmp(data_type, @encode(long long)) == 0 ||
-            strcmp(data_type, @encode(unsigned short)) == 0 ||
-            strcmp(data_type, @encode(unsigned int)) == 0 ||
-            strcmp(data_type, @encode(unsigned long)) == 0 ||
-            strcmp(data_type, @encode(unsigned long long)) == 0);
+    char data_type = [obj objCType][0];
+    return data_type == *@encode(bool) ||
+           data_type == *@encode(char) ||
+           data_type == *@encode(short) ||
+           data_type == *@encode(int) ||
+           data_type == *@encode(long) ||
+           data_type == *@encode(long long) ||
+           data_type == *@encode(unsigned short) ||
+           data_type == *@encode(unsigned int) ||
+           data_type == *@encode(unsigned long) ||
+           data_type == *@encode(unsigned long long);
 }
 
-static inline bool nsnumber_is_like_bool(NSNumber *obj)
+static inline bool nsnumber_is_like_bool(__unsafe_unretained NSNumber *const obj)
 {
     // @encode(BOOL) is 'B' on iOS 64 and 'c'
     // objcType is always 'c'. Therefore compare to "c".
@@ -55,40 +68,38 @@ static inline bool nsnumber_is_like_bool(NSNumber *obj)
     return false;
 }
 
-static inline bool nsnumber_is_like_float(NSNumber *obj)
+static inline bool nsnumber_is_like_float(__unsafe_unretained NSNumber *const obj)
 {
-    const char *data_type = [obj objCType];
-    // FIXME: Performance optimization - don't use strcmp, use first char in data_type.
-    return (strcmp(data_type, @encode(float)) == 0 ||
-            strcmp(data_type, @encode(short)) == 0 ||
-            strcmp(data_type, @encode(int)) == 0 ||
-            strcmp(data_type, @encode(long)) ==  0 ||
-            strcmp(data_type, @encode(long long)) == 0 ||
-            strcmp(data_type, @encode(unsigned short)) == 0 ||
-            strcmp(data_type, @encode(unsigned int)) == 0 ||
-            strcmp(data_type, @encode(unsigned long)) == 0 ||
-            strcmp(data_type, @encode(unsigned long long)) == 0 ||
-            // A double is like float if it fits within float bounds
-            (strcmp(data_type, @encode(double)) == 0 && ABS([obj doubleValue]) <= FLT_MAX));
+    char data_type = [obj objCType][0];
+    return data_type == *@encode(float) ||
+           data_type == *@encode(short) ||
+           data_type == *@encode(int) ||
+           data_type == *@encode(long) ||
+           data_type == *@encode(long long) ||
+           data_type == *@encode(unsigned short) ||
+           data_type == *@encode(unsigned int) ||
+           data_type == *@encode(unsigned long) ||
+           data_type == *@encode(unsigned long long) ||
+           // A double is like float if it fits within float bounds
+           (data_type == *@encode(double) && ABS([obj doubleValue]) <= FLT_MAX);
 }
 
-static inline bool nsnumber_is_like_double(NSNumber *obj)
+static inline bool nsnumber_is_like_double(__unsafe_unretained NSNumber *const obj)
 {
-    const char *data_type = [obj objCType];
-    // FIXME: Performance optimization - don't use strcmp, use first char in data_type.
-    return (strcmp(data_type, @encode(double)) == 0 ||
-            strcmp(data_type, @encode(float)) == 0 ||
-            strcmp(data_type, @encode(short)) == 0 ||
-            strcmp(data_type, @encode(int)) == 0 ||
-            strcmp(data_type, @encode(long)) ==  0 ||
-            strcmp(data_type, @encode(long long)) == 0 ||
-            strcmp(data_type, @encode(unsigned short)) == 0 ||
-            strcmp(data_type, @encode(unsigned int)) == 0 ||
-            strcmp(data_type, @encode(unsigned long)) == 0 ||
-            strcmp(data_type, @encode(unsigned long long)) == 0);
+    char data_type = [obj objCType][0];
+    return data_type == *@encode(double) ||
+           data_type == *@encode(float) ||
+           data_type == *@encode(short) ||
+           data_type == *@encode(int) ||
+           data_type == *@encode(long) ||
+           data_type == *@encode(long long) ||
+           data_type == *@encode(unsigned short) ||
+           data_type == *@encode(unsigned int) ||
+           data_type == *@encode(unsigned long) ||
+           data_type == *@encode(unsigned long long);
 }
 
-static inline bool object_has_valid_type(id obj)
+static inline bool object_has_valid_type(__unsafe_unretained id const obj)
 {
     return ([obj isKindOfClass:[NSString class]] ||
             [obj isKindOfClass:[NSNumber class]] ||
@@ -96,7 +107,12 @@ static inline bool object_has_valid_type(id obj)
             [obj isKindOfClass:[NSData class]]);
 }
 
-BOOL RLMIsObjectValidForProperty(id obj, RLMProperty *property) {
+BOOL RLMIsObjectValidForProperty(__unsafe_unretained id const obj,
+                                 __unsafe_unretained RLMProperty *const property) {
+    if (property.optional && !RLMCoerceToNil(obj)) {
+        return YES;
+    }
+
     switch (property.type) {
         case RLMPropertyTypeString:
             return [obj isKindOfClass:[NSString class]];
@@ -129,17 +145,21 @@ BOOL RLMIsObjectValidForProperty(id obj, RLMProperty *property) {
         case RLMPropertyTypeObject: {
             // only NSNull, nil, or objects which derive from RLMObject and match the given
             // object class are valid
-            BOOL isValidObject = [RLMDynamicCast<RLMObject>(obj).objectSchema.className isEqualToString:property.objectClassName];
-            return isValidObject || obj == nil || obj == NSNull.null;
+            RLMObjectBase *objBase = RLMDynamicCast<RLMObjectBase>(obj);
+            return objBase && [objBase->_objectSchema.className isEqualToString:property.objectClassName];
         }
         case RLMPropertyTypeArray: {
             if (RLMArray *array = RLMDynamicCast<RLMArray>(obj)) {
                 return [array.objectClassName isEqualToString:property.objectClassName];
             }
-            if (NSArray *array = RLMDynamicCast<NSArray>(obj)) {
+            if (RLMListBase *list = RLMDynamicCast<RLMListBase>(obj)) {
+                return [list._rlmArray.objectClassName isEqualToString:property.objectClassName];
+            }
+            if ([obj conformsToProtocol:@protocol(NSFastEnumeration)]) {
                 // check each element for compliance
-                for (id el in array) {
-                    if (![RLMDynamicCast<RLMObject>(el).objectSchema.className isEqualToString:property.objectClassName]) {
+                for (id el in (id<NSFastEnumeration>)obj) {
+                    RLMObjectBase *obj = RLMDynamicCast<RLMObjectBase>(el);
+                    if (!obj || ![obj->_objectSchema.className isEqualToString:property.objectClassName]) {
                         return NO;
                     }
                 }
@@ -151,70 +171,200 @@ BOOL RLMIsObjectValidForProperty(id obj, RLMProperty *property) {
             return NO;
         }
     }
-    @throw [NSException exceptionWithName:@"RLMException" reason:@"Invalid RLMPropertyType specified" userInfo:nil];
+    @throw RLMException(@"Invalid RLMPropertyType specified");
 }
 
-id RLMValidatedObjectForProperty(id obj, RLMProperty *prop, RLMSchema *schema) {
-    if (!RLMIsObjectValidForProperty(obj, prop)) {
-        // check for object or array literals
-        if (prop.type == RLMPropertyTypeObject) {
-            // for object create and try to initialize with obj
-            RLMObjectSchema *objSchema = schema[prop.objectClassName];
-            return [[objSchema.objectClass alloc] initWithObject:obj];
-        }
-        else if (prop.type == RLMPropertyTypeArray && [obj conformsToProtocol:@protocol(NSFastEnumeration)]) {
-            // for arrays, create objects for each literal object and return new array
-            RLMObjectSchema *objSchema = schema[prop.objectClassName];
-            RLMArray *objects = [[RLMArray alloc] initWithObjectClassName: objSchema.className standalone:YES];
-            for (id el in obj) {
-                [objects addObject:[[objSchema.objectClass alloc] initWithObject:el]];
-            }
-            return objects;
-        }
-
-        // if not a literal throw
-        NSString *message = [NSString stringWithFormat:@"Invalid value '%@' for property '%@'", obj ?: @"nil", prop.name];
-        @throw [NSException exceptionWithName:@"RLMException" reason:message userInfo:nil];
+NSDictionary *RLMDefaultValuesForObjectSchema(__unsafe_unretained RLMObjectSchema *const objectSchema) {
+    if (!objectSchema.isSwiftClass) {
+        return [objectSchema.objectClass defaultPropertyValues];
     }
-    return obj;
+
+    NSMutableDictionary *defaults = nil;
+    if ([objectSchema.objectClass isSubclassOfClass:RLMObject.class]) {
+        defaults = [NSMutableDictionary dictionaryWithDictionary:[objectSchema.objectClass defaultPropertyValues]];
+    }
+    else {
+        defaults = [NSMutableDictionary dictionary];
+    }
+    RLMObject *defaultObject = [[objectSchema.objectClass alloc] init];
+    for (RLMProperty *prop in objectSchema.properties) {
+        if (!defaults[prop.name] && defaultObject[prop.name]) {
+            defaults[prop.name] = defaultObject[prop.name];
+        }
+    }
+    return defaults;
 }
 
-NSDictionary *RLMValidatedDictionaryForObjectSchema(id value, RLMObjectSchema *objectSchema, RLMSchema *schema, bool allowMissing) {
-    NSArray *properties = objectSchema.properties;
-    NSDictionary *defaults = [objectSchema.objectClass defaultPropertyValues];
-    NSMutableDictionary *outDict = [NSMutableDictionary dictionaryWithCapacity:properties.count];
-    BOOL isDict = [value isKindOfClass:NSDictionary.class];
-    for (RLMProperty *prop in properties) {
-        id obj = (isDict || [value respondsToSelector:NSSelectorFromString(prop.name)]) ? [value valueForKey:prop.name] : nil;
-
-        // get default for nil object
-        if (!obj && !allowMissing) {
-            obj = defaults[prop.name];
-        }
-
-        // validate if object is not nil, or for nil if we don't allow missing values
-        if (obj || !allowMissing) {
-            if (!obj) {
-                obj = NSNull.null;
-            }
-            outDict[prop.name] = RLMValidatedObjectForProperty(obj, prop, schema);
-        }
+NSArray *RLMCollectionValueForKey(id<RLMFastEnumerable> collection, NSString *key) {
+    size_t count = collection.count;
+    if (count == 0) {
+        return @[];
     }
-    return outDict;
+
+    RLMRealm *realm = collection.realm;
+    RLMObjectSchema *objectSchema = collection.objectSchema;
+
+    NSMutableArray *results = [NSMutableArray arrayWithCapacity:count];
+    if ([key isEqualToString:@"self"]) {
+        for (size_t i = 0; i < count; i++) {
+            size_t rowIndex = [collection indexInSource:i];
+            [results addObject:RLMCreateObjectAccessor(realm, objectSchema, rowIndex) ?: NSNull.null];
+        }
+        return results;
+    }
+
+    RLMObjectBase *accessor = [[objectSchema.accessorClass alloc] initWithRealm:realm schema:objectSchema];
+    realm::Table *table = objectSchema.table;
+    for (size_t i = 0; i < count; i++) {
+        size_t rowIndex = [collection indexInSource:i];
+        accessor->_row = (*table)[rowIndex];
+        RLMInitializeSwiftAccessorGenerics(accessor);
+        [results addObject:[accessor valueForKey:key] ?: NSNull.null];
+    }
+
+    return results;
 }
 
-NSArray *RLMValidatedArrayForObjectSchema(NSArray *array, RLMObjectSchema *objectSchema, RLMSchema *schema) {
-    NSArray *props = objectSchema.properties;
-    if (array.count != props.count) {
-        @throw [NSException exceptionWithName:@"RLMException"
-                                       reason:@"Invalid array input. Number of array elements does not match number of properties."
-                                     userInfo:nil];
+void RLMCollectionSetValueForKey(id<RLMFastEnumerable> collection, NSString *key, id value) {
+    realm::TableView tv = [collection tableView];
+    if (tv.size() == 0) {
+        return;
     }
 
-    // validate all values
-    NSMutableArray *outArray = [NSMutableArray arrayWithCapacity:props.count];
-    for (NSUInteger i = 0; i < array.count; i++) {
-        [outArray addObject:RLMValidatedObjectForProperty(array[i], props[i], schema)];
+    RLMRealm *realm = collection.realm;
+    RLMObjectSchema *objectSchema = collection.objectSchema;
+    RLMObjectBase *accessor = [[objectSchema.accessorClass alloc] initWithRealm:realm schema:objectSchema];
+    for (size_t i = 0; i < tv.size(); i++) {
+        accessor->_row = tv[i];
+        RLMInitializeSwiftAccessorGenerics(accessor);
+        [accessor setValue:value forKey:key];
     }
-    return outArray;
-};
+}
+
+
+static NSException *RLMException(NSString *reason, NSDictionary *additionalUserInfo) {
+    NSMutableDictionary *userInfo = @{RLMRealmVersionKey: REALM_COCOA_VERSION,
+                                      RLMRealmCoreVersionKey: @REALM_VERSION}.mutableCopy;
+    if (additionalUserInfo != nil) {
+        [userInfo addEntriesFromDictionary:additionalUserInfo];
+    }
+    NSException *e = [NSException exceptionWithName:RLMExceptionName
+                                             reason:reason
+                                           userInfo:userInfo];
+    return e;
+}
+
+NSException *RLMException(NSString *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    NSException *e = RLMException([[NSString alloc] initWithFormat:fmt arguments:args], @{});
+    va_end(args);
+    return e;
+}
+
+NSException *RLMException(std::exception const& exception) {
+    return RLMException(@"%@", @(exception.what()));
+}
+
+NSError *RLMMakeError(RLMError code, std::exception const& exception) {
+    return [NSError errorWithDomain:RLMErrorDomain
+                               code:code
+                           userInfo:@{NSLocalizedDescriptionKey: @(exception.what()),
+                                      @"Error Code": @(code)}];
+}
+
+NSError *RLMMakeError(RLMError code, const realm::util::File::AccessError& exception) {
+    return [NSError errorWithDomain:RLMErrorDomain
+                               code:code
+                           userInfo:@{NSLocalizedDescriptionKey: @(exception.what()),
+                                      NSFilePathErrorKey: @(exception.get_path().c_str()),
+                                      @"Error Code": @(code)}];
+}
+
+NSError *RLMMakeError(RLMError code, const realm::RealmFileException& exception) {
+    return [NSError errorWithDomain:RLMErrorDomain
+                               code:code
+                           userInfo:@{NSLocalizedDescriptionKey: @(exception.what()),
+                                      NSFilePathErrorKey: @(exception.path().c_str()),
+                                      @"Error Code": @(code)}];
+}
+
+NSError *RLMMakeError(std::system_error const& exception) {
+    return [NSError errorWithDomain:RLMErrorDomain
+                               code:exception.code().value()
+                           userInfo:@{NSLocalizedDescriptionKey: @(exception.what()),
+                                      @"Error Code": @(exception.code().value())}];
+}
+
+NSError *RLMMakeError(NSException *exception) {
+    return [NSError errorWithDomain:RLMErrorDomain
+                               code:0
+                           userInfo:@{NSLocalizedDescriptionKey: exception.reason}];
+}
+
+void RLMSetErrorOrThrow(NSError *error, NSError **outError) {
+    if (outError) {
+        *outError = error;
+    }
+    else {
+        NSString *msg = error.localizedDescription;
+        if (error.userInfo[NSFilePathErrorKey]) {
+            msg = [NSString stringWithFormat:@"%@: %@", error.userInfo[NSFilePathErrorKey], error.localizedDescription];
+        }
+        @throw RLMException(msg, @{NSUnderlyingErrorKey: error});
+    }
+}
+
+// Determines if class1 descends from class2
+static inline BOOL RLMIsSubclass(Class class1, Class class2) {
+    class1 = class_getSuperclass(class1);
+    return RLMIsKindOfClass(class1, class2);
+}
+
+BOOL RLMIsObjectSubclass(Class klass) {
+    return RLMIsSubclass(class_getSuperclass(klass), RLMObjectBase.class);
+}
+
+BOOL RLMIsDebuggerAttached()
+{
+    int name[] = {
+        CTL_KERN,
+        KERN_PROC,
+        KERN_PROC_PID,
+        getpid()
+    };
+
+    struct kinfo_proc info;
+    size_t info_size = sizeof(info);
+    if (sysctl(name, sizeof(name)/sizeof(name[0]), &info, &info_size, NULL, 0) == -1) {
+        NSLog(@"sysctl() failed: %s", strerror(errno));
+        return false;
+    }
+
+    return (info.kp_proc.p_flag & P_TRACED) != 0;
+}
+
+id RLMMixedToObjc(realm::Mixed const& mixed) {
+    switch (mixed.get_type()) {
+        case realm::type_String:
+            return RLMStringDataToNSString(mixed.get_string());
+        case realm::type_Int: {
+            return @(mixed.get_int());
+        case realm::type_Float:
+            return @(mixed.get_float());
+        case realm::type_Double:
+            return @(mixed.get_double());
+        case realm::type_Bool:
+            return @(mixed.get_bool());
+        case realm::type_DateTime:
+            return RLMDateTimeToNSDate(mixed.get_datetime());
+        case realm::type_Binary: {
+            return RLMBinaryDataToNSData(mixed.get_binary());
+        }
+        case realm::type_Link:
+        case realm::type_LinkList:
+        default:
+            @throw RLMException(@"Invalid data type for RLMPropertyTypeAny property.");
+        }
+    }
+}

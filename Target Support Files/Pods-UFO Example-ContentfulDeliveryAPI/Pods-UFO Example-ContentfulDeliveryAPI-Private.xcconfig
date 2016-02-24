@@ -1,6 +1,6 @@
 #include "Pods-UFO Example-ContentfulDeliveryAPI.xcconfig"
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
-HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers/Private" "${PODS_ROOT}/Headers/Private/ContentfulDeliveryAPI" "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/AFNetworking" "${PODS_ROOT}/Headers/Public/CCLRequestReplay" "${PODS_ROOT}/Headers/Public/CCLRequestReplay/CCLRequestReplay" "${PODS_ROOT}/Headers/Public/ContentfulDeliveryAPI" "${PODS_ROOT}/Headers/Public/ContentfulPersistence" "${PODS_ROOT}/Headers/Public/FBSnapshotTestCase" "${PODS_ROOT}/Headers/Public/ISO8601DateFormatter" "${PODS_ROOT}/Headers/Public/OCMock" "${PODS_ROOT}/Headers/Public/PDKTCollectionViewWaterfallLayout" "${PODS_ROOT}/Headers/Public/Realm" "${PODS_ROOT}/Headers/Public/Realm/Realm" "${PODS_ROOT}/Headers/Public/Realm/tightdb" "${PODS_ROOT}/Headers/Public/Realm/tightdb/util" "${PODS_ROOT}/Headers/Public/VCRURLConnection" "${PODS_ROOT}/Headers/Public/core/include" "${PODS_ROOT}/Headers/Public/core/include/tightdb" "${PODS_ROOT}/Headers/Public/core/include/tightdb/impl" "${PODS_ROOT}/Headers/Public/core/include/tightdb/util"
-OTHER_LDFLAGS = ${PODS_UFO_EXAMPLE_CONTENTFULDELIVERYAPI_OTHER_LDFLAGS} -ObjC
+HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers/Private" "${PODS_ROOT}/Headers/Private/ContentfulDeliveryAPI" "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/AFNetworking" "${PODS_ROOT}/Headers/Public/ContentfulDeliveryAPI" "${PODS_ROOT}/Headers/Public/ContentfulPersistence" "${PODS_ROOT}/Headers/Public/ISO8601DateFormatter" "${PODS_ROOT}/Headers/Public/PDKTCollectionViewWaterfallLayout"
+OTHER_LDFLAGS = ${PODS_UFO_EXAMPLE_CONTENTFULDELIVERYAPI_OTHER_LDFLAGS}
 PODS_ROOT = ${SRCROOT}
 SKIP_INSTALL = YES

@@ -1,1 +1,1 @@
-../../../../Realm/include-ios/Realm/RLMSchema_Private.h
+../../../../Realm/include/Realm/RLMSchema_Private.h
