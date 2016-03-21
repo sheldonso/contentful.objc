@@ -18,15 +18,9 @@
 #import "CoreDataManager.h"
 
 NSString* EntityNameFromClass(Class class) {
-    NSString* entityName = NSStringFromClass(class);
+    NSString* className = NSStringFromClass(class);
 
-    if ([entityName rangeOfString:@"."].location != NSNotFound) {
-        NSArray* components = [entityName componentsSeparatedByString:@"."];
-        NSCAssert(components.count == 2, @"Unexpected entity class name: %@", entityName);
-        entityName = components[1];
-    }
-
-    return entityName;
+    return [className componentsSeparatedByString:@"."].lastObject;
 }
 
 @interface CoreDataManager ()
@@ -498,10 +492,12 @@ NSString* EntityNameFromClass(Class class) {
     NSManagedObjectContext *managedObjectContext = self.managedObjectContext;
     if (managedObjectContext != nil) {
         if ([managedObjectContext hasChanges] && ![managedObjectContext save:&error]) {
-            // Replace this implementation with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-            abort();
+            if ([self.delegate respondsToSelector:@selector(dataManager:didFailSavingStoreWithError:)]) {
+                [self.delegate dataManager:self didFailSavingStoreWithError:error];
+            } else {
+                NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+                abort();
+            }
         }
     }
 }
@@ -617,8 +613,32 @@ NSString* EntityNameFromClass(Class class) {
     if (_persistentStoreCoordinator != nil) {
         return _persistentStoreCoordinator;
     }
-    
+
     NSError *error = nil;
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:self.storeURL.path isDirectory:nil]) {
+        NSDictionary* metadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
+                                                                                            URL:self.storeURL
+                                                                                          error:&error];
+
+        if (!metadata) {
+            if ([self.delegate respondsToSelector:@selector(dataManager:didFailAddingStoreWithError:)]) {
+                [self.delegate dataManager:self didFailAddingStoreWithError:error];
+            } else {
+                NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+                abort();
+            }
+        }
+
+        if (![self.managedObjectModel isConfiguration:nil compatibleWithStoreMetadata:metadata]) {
+            if ([self.delegate respondsToSelector:@selector(dataManager:handleMigrationWithMetadata:)]) {
+                [self.delegate dataManager:self handleMigrationWithMetadata:metadata];
+            } else {
+                [self deleteAll];
+            }
+        }
+    }
+
     _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc]
                                    initWithManagedObjectModel:[self managedObjectModel]];
     if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
@@ -626,10 +646,12 @@ NSString* EntityNameFromClass(Class class) {
                                                              URL:self.storeURL
                                                          options:nil
                                                            error:&error]) {
-        // Replace this implementation with code to handle the error appropriately.
-        // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
+        if ([self.delegate respondsToSelector:@selector(dataManager:didFailAddingStoreWithError:)]) {
+            [self.delegate dataManager:self didFailAddingStoreWithError:error];
+        } else {
+            NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+            abort();
+        }
     }
     
     return _persistentStoreCoordinator;
