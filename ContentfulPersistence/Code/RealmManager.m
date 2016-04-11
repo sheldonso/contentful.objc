@@ -69,7 +69,7 @@ static inline BOOL CDAIsKindOfClass(Class class1, Class class2) {
 
 -(void)deleteAssetWithIdentifier:(NSString *)identifier {
     NSPredicate* predicate = [self predicateWithIdentifier:identifier];
-    [self.currentRealm deleteObjects:[RealmAsset objectsWithPredicate:predicate]];
+    [self.currentRealm deleteObjects:[self.classForAssets objectsWithPredicate:predicate]];
 }
 
 -(void)deleteEntryWithIdentifier:(NSString *)identifier {
@@ -82,14 +82,14 @@ static inline BOOL CDAIsKindOfClass(Class class1, Class class2) {
 
 -(NSArray *)fetchAssetsFromDataStore {
     NSMutableArray* assets = [@[] mutableCopy];
-    for (RealmAsset* asset in [RealmAsset allObjects]) {
+    for (id asset in [self.classForAssets allObjects]) {
         [assets addObject:asset];
     }
     return [assets copy];
 }
 
 -(id<CDAPersistedAsset>)fetchAssetWithIdentifier:(NSString *)identifier {
-    return [RealmAsset objectsWithPredicate:[self predicateWithIdentifier:identifier]].firstObject;
+    return [self.classForAssets objectsWithPredicate:[self predicateWithIdentifier:identifier]].firstObject;
 }
 
 -(NSArray *)fetchEntriesFromDataStore {
@@ -119,7 +119,7 @@ static inline BOOL CDAIsKindOfClass(Class class1, Class class2) {
 }
 
 -(id<CDAPersistedSpace>)fetchSpaceFromDataStore {
-    return [RealmSpace allObjects].firstObject;
+    return [self.classForSpaces allObjects].firstObject;
 }
 
 -(void)forEachEntryClassDo:(void (^)(Class entryClass))entryClassHandler {
@@ -159,38 +159,23 @@ static inline BOOL CDAIsKindOfClass(Class class1, Class class2) {
     return [NSPredicate predicateWithFormat:@"identifier = %@", identifier];
 }
 
--(NSArray*)relationshipsForClass:(Class)clazz {
-    unsigned int propCount = 0;
-    objc_property_t* props = class_copyPropertyList(clazz, &propCount);
+- (NSArray *)propertiesForEntriesOfContentTypeWithIdentifier:(NSString *)identifier {
+    Class class = [self classForEntriesOfContentTypeWithIdentifier:identifier];
+    RLMObjectSchema* schema = [[[class allObjects] firstObject] objectSchema];
+    return [schema.properties valueForKey:@"name"];
+}
 
+-(NSArray*)relationshipsForClass:(Class)clazz {
     NSMutableArray* relationships = [@[] mutableCopy];
 
-    for (unsigned int i = 0; i < propCount; i++) {
-        NSString* attributes = [[NSString alloc] initWithUTF8String:property_getAttributes(props[i])];
-        if ([attributes hasPrefix:@"T@"]) {
-            NSArray* attrs = [attributes componentsSeparatedByString:@"\""];
-            if (attrs.count != 3) {
-                continue;
-            }
-
-            attrs = [attrs[1] componentsSeparatedByString:@"<"];
-            if (attrs.count < 1) {
-                continue;
-            }
-
-            Class propClass = NSClassFromString(attrs[0]);
-            BOOL propertyIsArray = CDAIsKindOfClass(propClass, RLMArray.class);
-            BOOL propertyIsObject = CDAIsKindOfClass(class_getSuperclass(propClass), RLMObject.class);
-
-            if (!propertyIsArray && !propertyIsObject) {
-                continue;
-            }
-
-            [relationships addObject:[[NSString alloc] initWithUTF8String:property_getName(props[i])]];
+    RLMObjectSchema* schema = [[[clazz allObjects] firstObject] objectSchema];
+    NSMutableArray* properties = [schema.properties mutableCopy];
+    for (RLMProperty* property in schema.properties) {
+        if (property.type == RLMPropertyTypeObject || property.type == RLMPropertyTypeArray) {
+            [relationships addObject:property.name];
         }
     }
 
-    free(props);
     return relationships;
 }
 
